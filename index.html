@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Highline Trail Family Adventure – October 2026</title>
+  <title>307 Highline Trail – Loe Family Adventure – Oct 2026</title>
   <meta name="description" content="Join us for a 3-day family backpacking trip along Arizona's historic Highline Trail (AZT Passage 26). October 2026 - Dates TBD.">
 
   <!-- Leaflet for interactive map -->
@@ -1106,6 +1106,121 @@
     .text-accent { color: var(--accent); }
     .text-accent2 { color: var(--accent2); }
     .text-muted { color: var(--muted); }
+
+    /* Print Button */
+    .print-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      border: none;
+      border-radius: 50px;
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-top: 24px;
+    }
+
+    .print-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(88,166,255,0.3);
+    }
+
+    /* Print Styles */
+    @media print {
+      * {
+        background: white !important;
+        color: black !important;
+        box-shadow: none !important;
+      }
+      
+      body {
+        font-size: 12pt;
+        line-height: 1.4;
+      }
+
+      .hero, .nav, .gallery-grid, .alert, #map, .map-section, 
+      .history-section, .signup-section, .lodging-section,
+      .resources-grid, footer, .weather-card, .water-grid,
+      .section-header p, .print-btn, .btn, .itinerary-grid,
+      #overview, #water, #itinerary, #lodging, #signup {
+        display: none !important;
+      }
+
+      #gear {
+        display: block !important;
+        padding: 0 !important;
+      }
+
+      .gear-section {
+        background: white !important;
+      }
+
+      .gear-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 20px !important;
+      }
+
+      .gear-category {
+        background: white !important;
+        border: 1px solid #ccc !important;
+        padding: 15px !important;
+        page-break-inside: avoid;
+      }
+
+      .gear-category h3 {
+        font-size: 14pt !important;
+        margin-bottom: 10px !important;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 8px;
+      }
+
+      .gear-category-icon {
+        display: none !important;
+      }
+
+      .gear-list li {
+        font-size: 11pt !important;
+        padding: 4px 0 !important;
+        display: flex !important;
+        align-items: center !important;
+      }
+
+      .gear-check {
+        width: 14px !important;
+        height: 14px !important;
+        border: 2px solid #333 !important;
+        border-radius: 3px !important;
+        margin-right: 8px !important;
+      }
+
+      .section-header h2 {
+        font-size: 18pt !important;
+        text-align: center !important;
+        margin-bottom: 20px !important;
+      }
+
+      .container {
+        max-width: 100% !important;
+        padding: 0 !important;
+      }
+
+      /* Add print header */
+      #gear::before {
+        content: "307 Highline Trail - Loe Family Adventure - Oct 2026";
+        display: block;
+        text-align: center;
+        font-size: 16pt;
+        font-weight: bold;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #333;
+      }
+    }
   </style>
 </head>
 <body>
@@ -1114,7 +1229,7 @@
   <section class="hero">
     <div class="hero-content">
       <div class="hero-badge">🥾 Family Backpacking Adventure</div>
-      <h1>Highline Trail<br>October 2026</h1>
+      <h1>307 Highline Trail<br>Oct 2026</h1>
       <p class="hero-subtitle">
         Join us for an unforgettable 3-day journey along Arizona's historic Highline Trail, 
         beneath the majestic Mogollon Rim.
@@ -1147,7 +1262,7 @@
   <!-- Navigation -->
   <nav class="nav">
     <div class="nav-inner">
-      <div class="nav-logo">🏔️ Highline 2026</div>
+      <div class="nav-logo">🏔️ 307 Highline 2026</div>
       <ul class="nav-links">
         <li><a href="#overview">Overview</a></li>
         <li><a href="#itinerary">Itinerary</a></li>
@@ -1529,6 +1644,12 @@
             <li><div class="gear-check"></div> Duct tape (small roll)</li>
           </ul>
         </div>
+      </div>
+
+      <div style="text-align: center;">
+        <button class="print-btn" onclick="window.print()">
+          🖨️ Print Gear Checklist
+        </button>
       </div>
     </div>
   </section>
@@ -1937,9 +2058,9 @@
   <!-- Footer -->
   <footer>
     <div class="footer-content">
-      <div class="footer-logo">🏔️ Highline Trail 2026</div>
+      <div class="footer-logo">🏔️ 307 Highline Trail 2026</div>
       <p class="footer-text">
-        A family adventure along Arizona's historic Highline Trail.<br>
+        A Loe family adventure along Arizona's historic Highline Trail.<br>
         Part of Arizona Trail Passage 26.
       </p>
       <div class="footer-links">
