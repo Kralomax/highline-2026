@@ -1,0 +1,1664 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Highline Trail Family Adventure – October 2026</title>
+  <meta name="description" content="Join us for a 3-day family backpacking trip along Arizona's historic Highline Trail (AZT Passage 26). October 2026 - Dates TBD.">
+
+  <!-- Leaflet for interactive map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --card-hover: #1c2128;
+      --border: rgba(255,255,255,0.1);
+      --text: #f0f6fc;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --accent2: #7ee787;
+      --accent3: #f78166;
+      --warn: #d29922;
+      --gradient-start: #1a4a6e;
+      --gradient-end: #2d5a27;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 16px;
+    }
+
+    a { color: var(--accent); text-decoration: none; transition: color 0.2s; }
+    a:hover { color: var(--accent2); text-decoration: underline; }
+
+    /* Hero Section */
+    .hero {
+      position: relative;
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      background: 
+        linear-gradient(180deg, rgba(13,17,23,0.3) 0%, rgba(13,17,23,0.7) 60%, rgba(13,17,23,1) 100%),
+        url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80') center/cover no-repeat;
+    }
+
+    .hero-content {
+      max-width: 900px;
+      z-index: 1;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      padding: 8px 20px;
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #fff 0%, #a8d8ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-subtitle {
+      font-size: 1.3rem;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto 32px;
+      font-family: 'Merriweather', Georgia, serif;
+      font-style: italic;
+    }
+
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+
+    .hero-stat {
+      text-align: center;
+    }
+
+    .hero-stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent2);
+    }
+
+    .hero-stat-label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(88,166,255,0.3);
+      text-decoration: none;
+      color: #fff;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: var(--accent);
+      text-decoration: none;
+    }
+
+    /* Navigation */
+    .nav {
+      position: sticky;
+      top: 0;
+      background: rgba(13,17,23,0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+      padding: 0 20px;
+    }
+
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .nav-logo {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+    }
+
+    /* Main Content */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    section {
+      padding: 80px 0;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .section-header h2 {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .section-header p {
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto;
+      font-size: 1.1rem;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .card:hover {
+      border-color: rgba(88,166,255,0.3);
+      transform: translateY(-4px);
+      box-shadow: var(--shadow);
+    }
+
+    .card-body { padding: 24px; }
+
+    /* Photo Gallery */
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .gallery-item {
+      position: relative;
+      border-radius: var(--radius);
+      overflow: hidden;
+      aspect-ratio: 4/3;
+    }
+
+    .gallery-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s ease;
+    }
+
+    .gallery-item:hover img {
+      transform: scale(1.05);
+    }
+
+    .gallery-caption {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 60px 16px 16px;
+      background: linear-gradient(transparent, rgba(0,0,0,0.8));
+      color: #fff;
+      font-size: 0.9rem;
+    }
+
+    /* Itinerary */
+    .itinerary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    .day-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .day-header {
+      padding: 20px 24px;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .day-number {
+      width: 48px;
+      height: 48px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .day-title h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .day-title span {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+
+    .day-content {
+      padding: 24px;
+    }
+
+    .day-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .day-stat {
+      text-align: center;
+    }
+
+    .day-stat-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent2);
+    }
+
+    .day-stat-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .day-highlights {
+      list-style: none;
+    }
+
+    .day-highlights li {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .day-highlights li:last-child {
+      border-bottom: none;
+    }
+
+    .highlight-icon {
+      width: 24px;
+      height: 24px;
+      background: rgba(126,231,135,0.15);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 12px;
+    }
+
+    /* Water Sources */
+    .water-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+
+    .water-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+    }
+
+    .water-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #3b82f6, #06b6d4);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .water-info h4 {
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+
+    .water-info p {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .water-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-top: 8px;
+    }
+
+    .status-reliable {
+      background: rgba(126,231,135,0.15);
+      color: var(--accent2);
+    }
+
+    .status-seasonal {
+      background: rgba(210,153,34,0.15);
+      color: var(--warn);
+    }
+
+    /* Gear Checklist */
+    .gear-section {
+      background: linear-gradient(180deg, rgba(22,27,34,0.5), var(--bg));
+    }
+
+    .gear-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .gear-category {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+    }
+
+    .gear-category h3 {
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .gear-category-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .gear-list {
+      list-style: none;
+    }
+
+    .gear-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .gear-check {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+
+    /* Weather */
+    .weather-card {
+      background: linear-gradient(135deg, #1e3a5f, #2d4a3e);
+      border-radius: var(--radius);
+      padding: 40px;
+      text-align: center;
+    }
+
+    .weather-temps {
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      margin: 32px 0;
+    }
+
+    .weather-temp {
+      text-align: center;
+    }
+
+    .weather-temp-value {
+      font-size: 3rem;
+      font-weight: 700;
+    }
+
+    .weather-temp-label {
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .weather-note {
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 24px;
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.8);
+    }
+
+    /* Map Section */
+    .map-section {
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .map-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .map-header h3 {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+
+    .map-header p {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    #map {
+      height: 500px;
+      width: 100%;
+    }
+
+    .trailhead-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 24px;
+      background: var(--bg);
+    }
+
+    .trailhead-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .trailhead-card h4 {
+      font-size: 1rem;
+      margin-bottom: 12px;
+      color: var(--accent2);
+    }
+
+    .trailhead-detail {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .trailhead-detail strong {
+      color: var(--text);
+      min-width: 80px;
+    }
+
+    /* History Section */
+    .history-section {
+      background: linear-gradient(180deg, var(--bg), rgba(30,58,95,0.3));
+    }
+
+    .history-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .history-content { grid-template-columns: 1fr; }
+    }
+
+    .history-text h2 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+    }
+
+    .history-text p {
+      color: var(--muted);
+      margin-bottom: 16px;
+      font-size: 1.05rem;
+      line-height: 1.8;
+    }
+
+    .history-image {
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .history-image img {
+      width: 100%;
+      height: 400px;
+      object-fit: cover;
+    }
+
+    /* Sign Up Form */
+    .signup-section {
+      background: linear-gradient(180deg, rgba(45,74,62,0.3), var(--bg));
+    }
+
+    .signup-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      max-width: 600px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+
+    .signup-header {
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      padding: 32px;
+      text-align: center;
+    }
+
+    .signup-header h2 {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+
+    .signup-header p {
+      opacity: 0.9;
+    }
+
+    .signup-form {
+      padding: 32px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 14px 16px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .form-group textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 500px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    .form-note {
+      background: rgba(88,166,255,0.1);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 24px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .form-note strong {
+      color: var(--accent);
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--accent2), #22c55e);
+      border: none;
+      border-radius: 10px;
+      color: #000;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(126,231,135,0.3);
+    }
+
+    /* Resources */
+    .resources-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .resource-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      gap: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .resource-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .resource-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(88,166,255,0.15);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .resource-info h4 {
+      font-size: 1rem;
+      margin-bottom: 6px;
+    }
+
+    .resource-info p {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    /* Safety Alert */
+    .alert {
+      background: rgba(247,129,102,0.1);
+      border: 1px solid rgba(247,129,102,0.3);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin: 32px 0;
+      display: flex;
+      gap: 16px;
+    }
+
+    .alert-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(247,129,102,0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .alert h4 {
+      color: var(--accent3);
+      margin-bottom: 8px;
+    }
+
+    .alert p {
+      color: rgba(255,255,255,0.8);
+      font-size: 0.95rem;
+    }
+
+    /* Footer */
+    footer {
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      padding: 48px 20px;
+      text-align: center;
+    }
+
+    .footer-content {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .footer-logo {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .footer-text {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .footer-credit {
+      margin-top: 32px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    /* Utility */
+    .text-accent { color: var(--accent); }
+    .text-accent2 { color: var(--accent2); }
+    .text-muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">🥾 Family Backpacking Adventure</div>
+      <h1>Highline Trail<br>October 2026</h1>
+      <p class="hero-subtitle">
+        Join us for an unforgettable 3-day journey along Arizona's historic Highline Trail, 
+        beneath the majestic Mogollon Rim.
+      </p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-value">~21</div>
+          <div class="hero-stat-label">Miles Total</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value">3</div>
+          <div class="hero-stat-label">Days</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value">7,200'</div>
+          <div class="hero-stat-label">Max Elevation</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value">Oct '26</div>
+          <div class="hero-stat-label">Date TBD</div>
+        </div>
+      </div>
+      <div class="hero-cta">
+        <a href="#signup" class="btn btn-primary">📝 Sign Up for Updates</a>
+        <a href="#itinerary" class="btn btn-secondary">📅 View Itinerary</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-logo">🏔️ Highline 2026</div>
+      <ul class="nav-links">
+        <li><a href="#overview">Overview</a></li>
+        <li><a href="#itinerary">Itinerary</a></li>
+        <li><a href="#water">Water</a></li>
+        <li><a href="#gear">Gear</a></li>
+        <li><a href="#map">Map</a></li>
+        <li><a href="#signup">Sign Up</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Overview Section -->
+  <section id="overview" class="container">
+    <div class="section-header">
+      <h2>What to Expect</h2>
+      <p>Arizona Trail Passage 26 offers stunning rim country views, cool pine forests, and a rich pioneer history.</p>
+    </div>
+
+    <div class="gallery-grid">
+      <div class="gallery-item">
+        <img src="https://images.unsplash.com/photo-1501555088652-021faa106b9b?w=800&q=80" alt="Hikers on mountain trail">
+        <div class="gallery-caption">Scenic forest trails through ponderosa pines</div>
+      </div>
+      <div class="gallery-item">
+        <img src="https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=800&q=80" alt="Camping under stars">
+        <div class="gallery-caption">Backcountry camping under the stars</div>
+      </div>
+      <div class="gallery-item">
+        <img src="https://images.unsplash.com/photo-1519904981063-b0cf448d479e?w=800&q=80" alt="Mountain stream">
+        <div class="gallery-caption">Natural springs and creek crossings</div>
+      </div>
+      <div class="gallery-item">
+        <img src="https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80" alt="Sunrise over mountains">
+        <div class="gallery-caption">Stunning rim country vistas</div>
+      </div>
+    </div>
+
+    <div class="alert">
+      <div class="alert-icon">⚠️</div>
+      <div>
+        <h4>Trail Advisory</h4>
+        <p>Tonto National Forest advises avoiding camping near drainages recently impacted by the Washington Fire along Passage 26. This includes the 2-mile stretch between Chase Creek (AZT mile 477.1) and the two drainages to the east. We'll plan our route accordingly.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Itinerary Section -->
+  <section id="itinerary" class="container">
+    <div class="section-header">
+      <h2>3-Day Itinerary</h2>
+      <p>A relaxed pace perfect for families, averaging about 7 miles per day with plenty of time to enjoy the scenery.</p>
+    </div>
+
+    <div class="itinerary-grid">
+      <!-- Day 1 -->
+      <div class="day-card">
+        <div class="day-header">
+          <div class="day-number">1</div>
+          <div class="day-title">
+            <h3>Pine Trailhead → Webber Creek</h3>
+            <span>Getting into the rhythm</span>
+          </div>
+        </div>
+        <div class="day-content">
+          <div class="day-stats">
+            <div class="day-stat">
+              <div class="day-stat-value">~7</div>
+              <div class="day-stat-label">Miles</div>
+            </div>
+            <div class="day-stat">
+              <div class="day-stat-value">+800'</div>
+              <div class="day-stat-label">Elevation</div>
+            </div>
+            <div class="day-stat">
+              <div class="day-stat-value">4-5</div>
+              <div class="day-stat-label">Hours</div>
+            </div>
+          </div>
+          <ul class="day-highlights">
+            <li>
+              <div class="highlight-icon">🚗</div>
+              <div>Meet at Pine Trailhead parking area (easy highway access)</div>
+            </li>
+            <li>
+              <div class="highlight-icon">🌲</div>
+              <div>Hike through beautiful ponderosa pine forest</div>
+            </li>
+            <li>
+              <div class="highlight-icon">💧</div>
+              <div>Pass Red Rock Spring & Pine Spring (seasonal water)</div>
+            </li>
+            <li>
+              <div class="highlight-icon">⛺</div>
+              <div>Camp near Webber Creek – reliable water source</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Day 2 -->
+      <div class="day-card">
+        <div class="day-header">
+          <div class="day-number">2</div>
+          <div class="day-title">
+            <h3>Webber Creek → Bray Creek</h3>
+            <span>The heart of the trail</span>
+          </div>
+        </div>
+        <div class="day-content">
+          <div class="day-stats">
+            <div class="day-stat">
+              <div class="day-stat-value">~8</div>
+              <div class="day-stat-label">Miles</div>
+            </div>
+            <div class="day-stat">
+              <div class="day-stat-value">+1,200'</div>
+              <div class="day-stat-label">Elevation</div>
+            </div>
+            <div class="day-stat">
+              <div class="day-stat-value">5-6</div>
+              <div class="day-stat-label">Hours</div>
+            </div>
+          </div>
+          <ul class="day-highlights">
+            <li>
+              <div class="highlight-icon">🦌</div>
+              <div>Best wildlife viewing – elk, deer, and turkey common</div>
+            </li>
+            <li>
+              <div class="highlight-icon">🏔️</div>
+              <div>Stunning views of the Mogollon Rim escarpment</div>
+            </li>
+            <li>
+              <div class="highlight-icon">🪨</div>
+              <div>Unique rock formations and slickrock areas</div>
+            </li>
+            <li>
+              <div class="highlight-icon">⛺</div>
+              <div>Camp at Bray Creek – great campsites, reliable water</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Day 3 -->
+      <div class="day-card">
+        <div class="day-header">
+          <div class="day-number">3</div>
+          <div class="day-title">
+            <h3>Bray Creek → Washington Park</h3>
+            <span>The grand finale</span>
+          </div>
+        </div>
+        <div class="day-content">
+          <div class="day-stats">
+            <div class="day-stat">
+              <div class="day-stat-value">~6</div>
+              <div class="day-stat-label">Miles</div>
+            </div>
+            <div class="day-stat">
+              <div class="day-stat-value">+1,800'</div>
+              <div class="day-stat-label">Elevation</div>
+            </div>
+            <div class="day-stat">
+              <div class="day-stat-value">4-5</div>
+              <div class="day-stat-label">Hours</div>
+            </div>
+          </div>
+          <ul class="day-highlights">
+            <li>
+              <div class="highlight-icon">💧</div>
+              <div>Pass East Verde River – final water fill-up</div>
+            </li>
+            <li>
+              <div class="highlight-icon">⬆️</div>
+              <div>Climb steeply onto the Mogollon Rim</div>
+            </li>
+            <li>
+              <div class="highlight-icon">📸</div>
+              <div>Incredible panoramic views from the rim top</div>
+            </li>
+            <li>
+              <div class="highlight-icon">🏁</div>
+              <div>Finish at Washington Park Trailhead – celebration time!</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Water Sources Section -->
+  <section id="water" class="container">
+    <div class="section-header">
+      <h2>Water Sources</h2>
+      <p>The Highline has more water than most Arizona Trail sections, but always carry enough and filter everything.</p>
+    </div>
+
+    <div class="water-grid">
+      <div class="water-card">
+        <div class="water-icon">💧</div>
+        <div class="water-info">
+          <h4>Red Rock Spring</h4>
+          <p>Early in the hike, near Pine Trailhead</p>
+          <span class="water-status status-seasonal">Seasonal</span>
+        </div>
+      </div>
+      <div class="water-card">
+        <div class="water-icon">💧</div>
+        <div class="water-info">
+          <h4>Pine Spring</h4>
+          <p>A few miles into the trail</p>
+          <span class="water-status status-seasonal">Seasonal</span>
+        </div>
+      </div>
+      <div class="water-card">
+        <div class="water-icon">💧</div>
+        <div class="water-info">
+          <h4>Webber Creek</h4>
+          <p>Day 1 campsite area</p>
+          <span class="water-status status-reliable">Usually Reliable</span>
+        </div>
+      </div>
+      <div class="water-card">
+        <div class="water-icon">💧</div>
+        <div class="water-info">
+          <h4>Bray Creek</h4>
+          <p>Day 2 campsite area</p>
+          <span class="water-status status-reliable">Usually Reliable</span>
+        </div>
+      </div>
+      <div class="water-card">
+        <div class="water-icon">💧</div>
+        <div class="water-info">
+          <h4>North Sycamore Creek</h4>
+          <p>Between Bray Creek and East Verde</p>
+          <span class="water-status status-reliable">Usually Reliable</span>
+        </div>
+      </div>
+      <div class="water-card">
+        <div class="water-icon">💧</div>
+        <div class="water-info">
+          <h4>East Verde River</h4>
+          <p>Last major water before the rim climb</p>
+          <span class="water-status status-reliable">Usually Reliable</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert" style="background: rgba(88,166,255,0.1); border-color: rgba(88,166,255,0.3);">
+      <div class="alert-icon" style="background: rgba(88,166,255,0.2);">💡</div>
+      <div>
+        <h4 style="color: var(--accent);">Pro Tip</h4>
+        <p>Check the <a href="https://aztrail.org/explore/water-sources/" target="_blank">Arizona Trail Water Report</a> before our trip for current conditions. We recommend carrying at least 3 liters per person and always filter/treat water from natural sources.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Weather Section -->
+  <section class="container">
+    <div class="section-header">
+      <h2>October Weather</h2>
+      <p>October is one of the best times to hike the Highline – perfect temperatures and stunning fall colors.</p>
+    </div>
+
+    <div class="weather-card">
+      <h3>🍂 Typical October Conditions</h3>
+      <div class="weather-temps">
+        <div class="weather-temp">
+          <div class="weather-temp-value" style="color: var(--accent3);">55-65°F</div>
+          <div class="weather-temp-label">Daytime Highs</div>
+        </div>
+        <div class="weather-temp">
+          <div class="weather-temp-value" style="color: var(--accent);">30-40°F</div>
+          <div class="weather-temp-label">Nighttime Lows</div>
+        </div>
+      </div>
+      <div class="weather-note">
+        <strong>What to expect:</strong> Clear skies most days, cool mornings, pleasant hiking temperatures. 
+        Nights can be chilly at elevation – bring layers! Monsoon season is typically over by October, 
+        but always be prepared for sudden weather changes in the mountains.
+      </div>
+    </div>
+  </section>
+
+  <!-- Gear Checklist Section -->
+  <section id="gear" class="gear-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Gear Checklist</h2>
+        <p>Essential items for a safe and comfortable 3-day backpacking trip.</p>
+      </div>
+
+      <div class="gear-grid">
+        <div class="gear-category">
+          <h3>
+            <div class="gear-category-icon">🎒</div>
+            The Big 3
+          </h3>
+          <ul class="gear-list">
+            <li><div class="gear-check"></div> Backpack (50-65L recommended)</li>
+            <li><div class="gear-check"></div> Tent or shelter (3-season)</li>
+            <li><div class="gear-check"></div> Sleeping bag (20°F rating)</li>
+            <li><div class="gear-check"></div> Sleeping pad</li>
+          </ul>
+        </div>
+
+        <div class="gear-category">
+          <h3>
+            <div class="gear-category-icon">👕</div>
+            Clothing
+          </h3>
+          <ul class="gear-list">
+            <li><div class="gear-check"></div> Moisture-wicking base layers</li>
+            <li><div class="gear-check"></div> Insulating mid-layer (fleece/down)</li>
+            <li><div class="gear-check"></div> Rain jacket</li>
+            <li><div class="gear-check"></div> Warm hat & gloves</li>
+            <li><div class="gear-check"></div> Hiking boots (broken in!)</li>
+            <li><div class="gear-check"></div> Extra socks (2-3 pairs)</li>
+          </ul>
+        </div>
+
+        <div class="gear-category">
+          <h3>
+            <div class="gear-category-icon">💧</div>
+            Water & Food
+          </h3>
+          <ul class="gear-list">
+            <li><div class="gear-check"></div> Water bottles/bladder (3L capacity)</li>
+            <li><div class="gear-check"></div> Water filter (Sawyer, Katadyn, etc.)</li>
+            <li><div class="gear-check"></div> Stove & fuel</li>
+            <li><div class="gear-check"></div> Pot/cookware</li>
+            <li><div class="gear-check"></div> 3 days of food + snacks</li>
+            <li><div class="gear-check"></div> Bear canister or hang bag</li>
+          </ul>
+        </div>
+
+        <div class="gear-category">
+          <h3>
+            <div class="gear-category-icon">🧭</div>
+            Navigation & Safety
+          </h3>
+          <ul class="gear-list">
+            <li><div class="gear-check"></div> Map & compass (or GPS device)</li>
+            <li><div class="gear-check"></div> Offline maps downloaded</li>
+            <li><div class="gear-check"></div> Headlamp + extra batteries</li>
+            <li><div class="gear-check"></div> First aid kit</li>
+            <li><div class="gear-check"></div> Emergency shelter/bivy</li>
+            <li><div class="gear-check"></div> Whistle</li>
+          </ul>
+        </div>
+
+        <div class="gear-category">
+          <h3>
+            <div class="gear-category-icon">☀️</div>
+            Sun & Bug Protection
+          </h3>
+          <ul class="gear-list">
+            <li><div class="gear-check"></div> Sunscreen (SPF 30+)</li>
+            <li><div class="gear-check"></div> Sunglasses</li>
+            <li><div class="gear-check"></div> Sun hat</li>
+            <li><div class="gear-check"></div> Bug spray/repellent</li>
+            <li><div class="gear-check"></div> Lip balm with SPF</li>
+          </ul>
+        </div>
+
+        <div class="gear-category">
+          <h3>
+            <div class="gear-category-icon">🔧</div>
+            Extras
+          </h3>
+          <ul class="gear-list">
+            <li><div class="gear-check"></div> Trekking poles (highly recommended)</li>
+            <li><div class="gear-check"></div> Camera</li>
+            <li><div class="gear-check"></div> Toilet paper & trowel</li>
+            <li><div class="gear-check"></div> Hand sanitizer</li>
+            <li><div class="gear-check"></div> Knife/multi-tool</li>
+            <li><div class="gear-check"></div> Duct tape (small roll)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Map Section -->
+  <section id="map" class="container">
+    <div class="section-header">
+      <h2>Trail Map & Trailheads</h2>
+      <p>This is a point-to-point hike requiring a shuttle or two-car setup.</p>
+    </div>
+
+    <div class="map-section">
+      <div class="map-header">
+        <h3>Interactive Trail Map</h3>
+        <p>Click markers for coordinates and directions. The line shows the approximate route.</p>
+      </div>
+      <div id="map"></div>
+      <div class="trailhead-cards">
+        <div class="trailhead-card">
+          <h4>🟢 Pine Trailhead (Start)</h4>
+          <div class="trailhead-detail">
+            <strong>Coords:</strong> 34.37432, -111.44310
+          </div>
+          <div class="trailhead-detail">
+            <strong>Access:</strong> Paved highway, easy parking
+          </div>
+          <div class="trailhead-detail">
+            <strong>Nearest:</strong> Pine / Strawberry (5 min)
+          </div>
+          <a href="https://www.google.com/maps/dir/?api=1&destination=34.37432,-111.44310" target="_blank" class="btn btn-secondary" style="margin-top: 12px; padding: 10px 16px; font-size: 0.9rem;">
+            📍 Get Directions
+          </a>
+        </div>
+        <div class="trailhead-card">
+          <h4>🔴 Washington Park Trailhead (End)</h4>
+          <div class="trailhead-detail">
+            <strong>Coords:</strong> 34.45368, -111.25088
+          </div>
+          <div class="trailhead-detail">
+            <strong>Access:</strong> FR 300 (dirt road, seasonal)
+          </div>
+          <div class="trailhead-detail">
+            <strong>Nearest:</strong> Payson (45 min)
+          </div>
+          <a href="https://www.google.com/maps/dir/?api=1&destination=34.45368,-111.25088" target="_blank" class="btn btn-secondary" style="margin-top: 12px; padding: 10px 16px; font-size: 0.9rem;">
+            📍 Get Directions
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- History Section -->
+  <section id="history" class="history-section">
+    <div class="container">
+      <div class="history-content">
+        <div class="history-text">
+          <h2>A Trail with Stories</h2>
+          <p>
+            The Highline Trail was established in <strong>1870</strong>, originally used by pioneers to 
+            travel between homesteads and for children to attend school in Pine. It's one of Arizona's 
+            oldest and most historic trails.
+          </p>
+          <p>
+            Famous western author <strong>Zane Grey</strong> used this trail while hunting with local 
+            guide Babe Haught. The landscape inspired many of his novels, and you can still feel the 
+            wild west spirit as you walk these paths.
+          </p>
+          <p>
+            The trail passes near the site of the <strong>Battle of Big Dry Wash</strong> (1882), 
+            the last major conflict between Apache warriors and U.S. military forces in Arizona.
+          </p>
+          <p>
+            Designated a <strong>National Recreation Trail in 1979</strong>, the Highline has been 
+            restored and improved through collaborative efforts between the Arizona Trail Association 
+            and Tonto National Forest.
+          </p>
+        </div>
+        <div class="history-image">
+          <img src="https://images.unsplash.com/photo-1542241014-581d0b8c27e0?w=800&q=80" alt="Historic mountain trail">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sign Up Section -->
+  <section id="signup" class="signup-section">
+    <div class="container">
+      <div class="section-header">
+        <h2>Join the Adventure</h2>
+        <p>Interested in joining us? Fill out this form and we'll keep you updated as plans come together.</p>
+      </div>
+
+      <div class="signup-card">
+        <div class="signup-header">
+          <h2>📝 Sign Up for Updates</h2>
+          <p>October 2026 • Dates TBD</p>
+        </div>
+        <form class="signup-form" action="#" method="POST" onsubmit="handleSignup(event)">
+          <div class="form-note">
+            <strong>Note:</strong> This form is for interest/planning purposes. Exact dates will be confirmed 
+            closer to the trip. We'll reach out via email with details!
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">First Name *</label>
+              <input type="text" id="firstName" name="firstName" required>
+            </div>
+            <div class="form-group">
+              <label for="lastName">Last Name *</label>
+              <input type="text" id="lastName" name="lastName" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address *</label>
+            <input type="email" id="email" name="email" required>
+          </div>
+
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" name="phone" placeholder="(optional)">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="partySize">How many in your party?</label>
+              <select id="partySize" name="partySize">
+                <option value="1">Just me</option>
+                <option value="2">2 people</option>
+                <option value="3">3 people</option>
+                <option value="4">4 people</option>
+                <option value="5+">5+ people</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="experience">Backpacking Experience</label>
+              <select id="experience" name="experience">
+                <option value="beginner">Beginner (first multi-day trip)</option>
+                <option value="some">Some experience (1-3 trips)</option>
+                <option value="experienced">Experienced (many trips)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="notes">Questions or Notes</label>
+            <textarea id="notes" name="notes" placeholder="Any dietary restrictions, gear questions, concerns, etc."></textarea>
+          </div>
+
+          <button type="submit" class="btn-submit">
+            ✅ Count Me In!
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Resources Section -->
+  <section class="container">
+    <div class="section-header">
+      <h2>Helpful Resources</h2>
+      <p>Links to official sources and useful planning tools.</p>
+    </div>
+
+    <div class="resources-grid">
+      <a href="https://aztrail.org/explore/passages/passage-26-highline/" target="_blank" class="resource-card">
+        <div class="resource-icon">🥾</div>
+        <div class="resource-info">
+          <h4>Arizona Trail Association</h4>
+          <p>Official Passage 26 info, maps, GPS data</p>
+        </div>
+      </a>
+      <a href="https://aztrail.org/explore/water-sources/" target="_blank" class="resource-card">
+        <div class="resource-icon">💧</div>
+        <div class="resource-info">
+          <h4>AZT Water Report</h4>
+          <p>Current water source conditions</p>
+        </div>
+      </a>
+      <a href="https://www.fs.usda.gov/recarea/tonto/null/recarea/?actid=50&recid=35597" target="_blank" class="resource-card">
+        <div class="resource-icon">🌲</div>
+        <div class="resource-info">
+          <h4>USFS Tonto National Forest</h4>
+          <p>Official forest service trail page</p>
+        </div>
+      </a>
+      <a href="https://www.alltrails.com/trail/us/arizona/arizona-trail-passage-26-highline" target="_blank" class="resource-card">
+        <div class="resource-icon">📱</div>
+        <div class="resource-info">
+          <h4>AllTrails</h4>
+          <p>Reviews, photos, and trail conditions</p>
+        </div>
+      </a>
+      <a href="https://www.visitarizona.com/places/parks-monuments/mogollon-rim" target="_blank" class="resource-card">
+        <div class="resource-icon">🏔️</div>
+        <div class="resource-info">
+          <h4>Visit Arizona – Mogollon Rim</h4>
+          <p>Area overview and travel info</p>
+        </div>
+      </a>
+      <a href="https://forecast.weather.gov/MapClick.php?zoneid=AZZ016" target="_blank" class="resource-card">
+        <div class="resource-icon">🌤️</div>
+        <div class="resource-info">
+          <h4>NWS Weather Forecast</h4>
+          <p>Official Mogollon Rim forecast</p>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Emergency Contacts -->
+  <section class="container" style="padding-bottom: 40px;">
+    <div class="alert" style="background: rgba(126,231,135,0.1); border-color: rgba(126,231,135,0.3);">
+      <div class="alert-icon" style="background: rgba(126,231,135,0.2);">📞</div>
+      <div>
+        <h4 style="color: var(--accent2);">Emergency Contacts</h4>
+        <p style="margin-bottom: 8px;">
+          <strong>Tonto National Forest – Payson Ranger District:</strong> (928) 474-7900<br>
+          <strong>Gila County Sheriff:</strong> (928) 425-4449<br>
+          <strong>In Emergency:</strong> Call 911 (cell service may be limited – know your location)
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-logo">🏔️ Highline Trail 2026</div>
+      <p class="footer-text">
+        A family adventure along Arizona's historic Highline Trail.<br>
+        Part of Arizona Trail Passage 26.
+      </p>
+      <div class="footer-links">
+        <a href="#overview">Overview</a>
+        <a href="#itinerary">Itinerary</a>
+        <a href="#gear">Gear</a>
+        <a href="#map">Map</a>
+        <a href="#signup">Sign Up</a>
+      </div>
+      <div class="footer-credit">
+        Built with ❤️ for family adventures • Map tiles © OpenStreetMap contributors
+      </div>
+    </div>
+  </footer>
+
+  <!-- JavaScript -->
+  <script>
+    // Initialize map when Leaflet loads
+    window.addEventListener("load", () => {
+      if (!window.L) return;
+
+      const pineTH = { name: "Pine Trailhead (Start)", lat: 34.37432, lon: -111.44310 };
+      const washParkTH = { name: "Washington Park Trailhead (End)", lat: 34.45368, lon: -111.25088 };
+
+      // Approximate waypoints for the trail
+      const trailPath = [
+        [pineTH.lat, pineTH.lon],
+        [34.3850, -111.4200],
+        [34.3950, -111.3900],
+        [34.4100, -111.3600],
+        [34.4250, -111.3300],
+        [34.4400, -111.2800],
+        [washParkTH.lat, washParkTH.lon]
+      ];
+
+      const map = L.map("map", { scrollWheelZoom: false }).setView([34.41, -111.35], 11);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 17,
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      }).addTo(map);
+
+      // Custom icons
+      const startIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background: #22c55e; width: 24px; height: 24px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      });
+
+      const endIcon = L.divIcon({
+        className: 'custom-marker',
+        html: '<div style="background: #ef4444; width: 24px; height: 24px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12]
+      });
+
+      // Add markers
+      const startMarker = L.marker([pineTH.lat, pineTH.lon], { icon: startIcon }).addTo(map);
+      startMarker.bindPopup(`
+        <b style="color: #22c55e;">🟢 ${pineTH.name}</b><br/>
+        ${pineTH.lat.toFixed(5)}, ${pineTH.lon.toFixed(5)}<br/>
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${pineTH.lat},${pineTH.lon}" target="_blank">Get Directions →</a>
+      `);
+
+      const endMarker = L.marker([washParkTH.lat, washParkTH.lon], { icon: endIcon }).addTo(map);
+      endMarker.bindPopup(`
+        <b style="color: #ef4444;">🔴 ${washParkTH.name}</b><br/>
+        ${washParkTH.lat.toFixed(5)}, ${washParkTH.lon.toFixed(5)}<br/>
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${washParkTH.lat},${washParkTH.lon}" target="_blank">Get Directions →</a>
+      `);
+
+      // Draw trail path
+      L.polyline(trailPath, {
+        color: '#58a6ff',
+        weight: 4,
+        opacity: 0.8,
+        dashArray: '10, 10'
+      }).addTo(map);
+
+      // Fit bounds
+      const bounds = L.latLngBounds(trailPath);
+      map.fitBounds(bounds.pad(0.15));
+    });
+
+    // Form submission handler
+    function handleSignup(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = new FormData(form);
+      
+      // For now, just show a confirmation
+      // In production, this would POST to a backend or Google Forms
+      alert(`Thanks for signing up, ${data.get('firstName')}! 🎉\n\nWe'll be in touch at ${data.get('email')} as plans come together.\n\nNote: This demo doesn't actually submit data. For the real form, we'll connect to a backend service.`);
+      
+      form.reset();
+    }
+
+    // Smooth scroll for nav links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          const navHeight = document.querySelector('.nav').offsetHeight;
+          const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - navHeight - 20;
+          window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>
