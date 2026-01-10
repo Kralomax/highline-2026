@@ -1,253 +1,1493 @@
------------------------------------
--- Setting up scope, upvalues and libs
------------------------------------
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>307 Highline Adventure – Choose Your Trail! – Sept 2026</title>
+  <meta name="description" content="Three amazing trail options for the Loe family reunion hike! Choose between Highline Trail, San Francisco Peaks, or Blue Ridge. September 2026.">
 
-local AddonName, PT = ...;
-local module = PT:NewModule("HealBandageButtons", "AceEvent-3.0");
+  <!-- Leaflet for interactive map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
 
-local L = LibStub("AceLocale-3.0"):GetLocale(AddonName);
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Merriweather:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
 
-local _G = _G;
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card: #161b22;
+      --card-hover: #1c2128;
+      --border: rgba(255,255,255,0.1);
+      --text: #f0f6fc;
+      --muted: #8b949e;
+      --accent: #58a6ff;
+      --accent2: #7ee787;
+      --accent3: #f78166;
+      --warn: #d29922;
+      --gradient-start: #1a4a6e;
+      --gradient-end: #2d5a27;
+      --shadow: 0 8px 32px rgba(0,0,0,0.4);
+      --radius: 16px;
+    }
 
-----------------------
--- Variables
-----------------------
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
 
-module.displayName = L["Heal Pet Buttons"];
-module.desc = L["When pet tracking is enabled, this module displays two buttons on a separate and draggable frame. One for healing your battle pets with the spellcast, another for healing with pet bandages. Clicking these buttons is allowed when not in combat."];
+    body {
+      font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 16px;
+    }
 
-module.petHealSpell = 125439; -- Blizzard_PetJournal.lua
-module.petBandage = 86143; -- item id
+    a { color: var(--accent); text-decoration: none; transition: color 0.2s; }
+    a:hover { color: var(--accent2); text-decoration: underline; }
 
--------------------------
--- Module Handling
--------------------------
+    /* Hero Section */
+    .hero {
+      position: relative;
+      min-height: 90vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      background: 
+        linear-gradient(180deg, rgba(13,17,23,0.3) 0%, rgba(13,17,23,0.7) 60%, rgba(13,17,23,1) 100%),
+        url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80') center/cover no-repeat;
+    }
 
-function module:OnInitialize()
-	self.db = PT.db:RegisterNamespace("HealBandageButtons", {
-		profile = {
-			enabled = false,
-			scale = 1,
-			draggable = true,
-			mousebutton = "type1",
-			modifier = "alt-",
-		},
-	});
+    .hero-content {
+      max-width: 1000px;
+      z-index: 1;
+    }
 
-	if( not self.db.profile.enabled ) then
-		self:SetEnabledState(false);
-	end
-	
-	-- set options
-	_G.PTHealBandageFrame:SetScale(module.db.profile.scale);
-	self:SetDraggable();
-	self:SetBindings(false, false);
-end
+    .hero-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      padding: 8px 20px;
+      border-radius: 50px;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
 
-function module:OnEnable()	
-	self:RegisterEvent("MINIMAP_UPDATE_TRACKING", "CheckMinimapTracking");
-	self:RegisterEvent("PLAYER_REGEN_DISABLED", "CombatEvent", true);
-	self:RegisterEvent("PLAYER_REGEN_ENABLED", "CombatEvent", false);
-	
-	self:CheckMinimapTracking();
-end
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #fff 0%, #a8d8ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
-function module:OnDisable()
-	self:UnregisterEvent("MINIMAP_UPDATE_TRACKING");
-	self:UnregisterEvent("PLAYER_REGEN_DISABLED");
-	self:UnregisterEvent("PLAYER_REGEN_ENABLED");
-	
-	_G.PTHealBandageFrame:Hide();
-end
+    .hero-subtitle {
+      font-size: 1.3rem;
+      color: var(--muted);
+      max-width: 700px;
+      margin: 0 auto 32px;
+      font-family: 'Merriweather', Georgia, serif;
+      font-style: italic;
+    }
 
-------------------------
--- Event Handlers
-------------------------
+    /* Trail Option Cards */
+    .trail-options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin: 48px 0;
+    }
 
-function module:CombatEvent(in_combat)
-	if( in_combat ) then
-		self.prevdisplayed = _G.PTHealBandageFrame:IsVisible();
-		_G.PTHealBandageFrame:Hide();
-	else
-		if( self.prevdisplayed ) then
-			_G.PTHealBandageFrame:Show();
-		end
-	end	
-end
+    .trail-card {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
 
-function module:CheckMinimapTracking()
-	local name, icon, active;
-	
-	for i = 1, _G.GetNumTrackingTypes() do
-		name, icon, active = _G.GetTrackingInfo(i);
-		
-		if( icon == "Interface\\Icons\\tracking_wildpet" ) then			
-			break;
-		end
-	end
-	
-	if( active ) then
-		_G.PTHealBandageFrame:Show();
-	else
-		_G.PTHealBandageFrame:Hide();
-	end
-end
+    .trail-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-8px);
+      box-shadow: var(--shadow);
+    }
 
------------------------
--- Frame related
------------------------
+    .trail-card-header {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
 
-function module:SetDraggable(draggable)
-	if( type(draggable) == "nil" ) then
-		draggable = module.db.profile.draggable;
-	end
-	draggable = draggable and "LeftButton" or nil;
-	
-	_G.PTHealBandageFrame:RegisterForDrag(draggable);
-	_G.PTHealBandageFrameHealButton:RegisterForDrag(draggable);
-	_G.PTHealBandageFrameBandageButton:RegisterForDrag(draggable);
-end
+    .trail-card h3 {
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+      color: var(--accent2);
+    }
 
-function module:SetBindings(button, modifier, value)
-	local old_button, old_modifier = self.db.profile.mousebutton, self.db.profile.modifier;
-	button = button and value or old_button;
-	modifier = modifier and value or old_modifier;
-	
-	_G.PTHealBandageFrameHealButton:SetAttribute(old_modifier..old_button, nil);
-	_G.PTHealBandageFrameHealButton:SetAttribute(modifier..button, "spell");
-	
-	_G.PTHealBandageFrameBandageButton:SetAttribute(old_modifier..old_button, nil);
-	_G.PTHealBandageFrameBandageButton:SetAttribute(modifier..button, "item");
-end
+    .trail-card-stats {
+      display: flex;
+      gap: 16px;
+      margin: 16px 0;
+      flex-wrap: wrap;
+    }
 
------------------------------
--- Both Button related
------------------------------
+    .trail-stat {
+      background: rgba(255,255,255,0.05);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
 
-function module.Button_UpdateCooldown(self)
-	local start, duration, enable;
-	
-	if( self:GetID() == 1 ) then
-		start, duration, enable = _G.GetSpellCooldown(module.petHealSpell);
-	else
-		start, duration, enable = _G.GetItemCooldown(module.petBandage);		
-	end
-	
-	if CooldownFrame_SetTimer then -- Check if the function exists
-    CooldownFrame_SetTimer(self.cooldown, start, duration, enable)
-end
+    .trail-difficulty {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-top: 12px;
+    }
 
-function module.Button_UpdateUsability(self)
-	if( _G.C_PetBattles.IsInBattle() ) then
-		self:SetButtonState("NORMAL", true);
-		self.icon:SetDesaturated(true);
-	else
-		self:SetButtonState("NORMAL", false);
-		self.icon:SetDesaturated(false);
-	end
-		
-	if( self:GetID() == 1 ) then		
-		if( self:IsEventRegistered("SPELLS_CHANGED") ) then
-			self:UnregisterEvent("SPELLS_CHANGED");
-		end
-	else
-		if( self:IsEventRegistered("BAG_UPDATE_DELAYED") ) then
-			self:UnregisterEvent("BAG_UPDATE_DELAYED");
-		end
-		
-		local id = module.petBandage;
-		local name, _, _, _, _, _, _, _, _, icon = _G.GetItemInfo(id);				
-		local count = _G.GetItemCount(id);
-		
-		self.icon:SetTexture(icon);
-		_G[self:GetName().."Count"]:SetText(count);
-		
-		if( count > 0 ) then
-			self.icon:SetVertexColor(1, 1, 1, 1);
-		else
-			self.icon:SetVertexColor(0.3, 0.3, 0.3, 1);
-		end
-	end
-end
+    .difficulty-hard {
+      background: rgba(247,129,102,0.2);
+      color: var(--accent3);
+      border: 1px solid var(--accent3);
+    }
 
-----------------------
--- Option Table
-----------------------
+    .difficulty-moderate {
+      background: rgba(210,153,34,0.2);
+      color: var(--warn);
+      border: 1px solid var(--warn);
+    }
 
-do
-	local function is_disabled(info)
-		return not module:IsEnabled() and true or not not _G.InCombatLockdown(); -- this API returns either 1 or nil, so we ensure a bool
-	end
-	
-	function module:GetOptions()
-		return {
-			draggable = {
-				type = "toggle",
-				name = L["Draggable"],
-				desc = L["You may drag the frame around when this option is set."],
-				order = 1,
-				get = function()
-					return module.db.profile.draggable;
-				end,
-				set = function(_, value)
-					module.db.profile.draggable = value;
-					self:SetDraggable(value);
-				end,
-			},
-			scale = {
-				type = "range",
-				name = L["Frame scale"],
-				min = 0.5,
-				max = 2.0,
-				step = 0.05,
-				order = 2,
-				get = function()
-					return self.db.profile.scale;
-				end,
-				set = function(_, value)
-					self.db.profile.scale = value;
-					_G.PTHealBandageFrame:SetScale(value);
-				end,
-			},
-			mousebutton = {
-				type = "select",
-				name = L["Mouse button"],
-				desc = L["Select the mouse button on which clicks will execute actions."],
-				order = 3,
-				get = function()
-					return self.db.profile.mousebutton;
-				end,
-				set = function(_, value)
-					self:SetBindings(true, false, value);
-					self.db.profile.mousebutton = value;
-				end,
-				values = {
-					["type1"] = L["Left"],
-					["type2"] = L["Right"],
-					["type*"] = _G.ALL,
-				},
-				disabled = is_disabled,
-			},
-			modifier = {
-				type = "select",
-				name = L["Modifier"],
-				desc = L["Choose whether you need to push a modifier key or not, when clicking an action button."],
-				order = 4,
-				get = function()
-					return self.db.profile.modifier;
-				end,
-				set = function(_, value)
-					self:SetBindings(false, true, value);
-					self.db.profile.modifier = value;
-				end,
-				values = {
-					[""] = _G.NONE,
-					["shift-"] = L["Shift"],
-					["alt-"]   = L["Alt"],
-					["ctrl-"]  = L["Ctrl"],
-				},
-				disabled = is_disabled,
-			},
-		};
-	end
-end
+    /* Navigation */
+    .nav {
+      position: sticky;
+      top: 0;
+      background: rgba(13,17,23,0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+      z-index: 100;
+      padding: 0 20px;
+    }
+
+    .nav-inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+    }
+
+    .nav-logo {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+      flex-wrap: wrap;
+    }
+
+    .nav-links a {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+      .nav-links { 
+        gap: 12px;
+        font-size: 0.85rem;
+      }
+    }
+
+    /* Main Content */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    section {
+      padding: 80px 0;
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .section-header h2 {
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .section-header p {
+      color: var(--muted);
+      max-width: 700px;
+      margin: 0 auto;
+      font-size: 1.1rem;
+    }
+
+    /* Comparison Table */
+    .comparison-wrapper {
+      overflow-x: auto;
+      margin: 32px 0;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card);
+    }
+
+    .comparison-table th,
+    .comparison-table td {
+      padding: 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .comparison-table th {
+      background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+      color: var(--text);
+      font-weight: 600;
+      position: sticky;
+      top: 64px;
+      z-index: 10;
+    }
+
+    .comparison-table tr:hover {
+      background: rgba(255,255,255,0.02);
+    }
+
+    .comparison-table td {
+      font-size: 0.95rem;
+    }
+
+    .star-rating {
+      color: var(--warn);
+    }
+
+    /* Trail Detail Sections */
+    .trail-detail-section {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 48px 32px;
+      margin-bottom: 48px;
+      border: 1px solid var(--border);
+    }
+
+    .trail-detail-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    .trail-detail-header h2 {
+      font-size: 2rem;
+      color: var(--accent2);
+    }
+
+    .trail-icon {
+      font-size: 3rem;
+    }
+
+    /* Day Cards */
+    .day-cards {
+      display: grid;
+      gap: 24px;
+      margin: 32px 0;
+    }
+
+    .day-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .day-card-header {
+      padding: 20px 24px;
+      background: linear-gradient(135deg, rgba(88,166,255,0.1), rgba(126,231,135,0.1));
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .day-number {
+      width: 48px;
+      height: 48px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #000;
+    }
+
+    .day-title h4 {
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+    }
+
+    .day-title span {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .day-card-body {
+      padding: 24px;
+    }
+
+    .day-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .day-stat {
+      text-align: center;
+    }
+
+    .day-stat-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--accent2);
+    }
+
+    .day-stat-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .highlights {
+      list-style: none;
+    }
+
+    .highlights li {
+      padding: 10px 0;
+      padding-left: 32px;
+      position: relative;
+      color: var(--muted);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .highlights li:last-child {
+      border-bottom: none;
+    }
+
+    .highlights li::before {
+      content: "✓";
+      position: absolute;
+      left: 8px;
+      color: var(--accent2);
+      font-weight: bold;
+    }
+
+    /* Water Sources */
+    .water-sources-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0;
+      background: rgba(255,255,255,0.02);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .water-sources-table th,
+    .water-sources-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .water-sources-table th {
+      background: rgba(88,166,255,0.1);
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .water-status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .status-reliable {
+      background: rgba(126,231,135,0.2);
+      color: var(--accent2);
+    }
+
+    .status-seasonal {
+      background: rgba(210,153,34,0.2);
+      color: var(--warn);
+    }
+
+    /* Info Boxes */
+    .info-box {
+      background: linear-gradient(135deg, rgba(88,166,255,0.1), rgba(126,231,135,0.05));
+      border: 1px solid var(--accent);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 24px 0;
+    }
+
+    .info-box h4 {
+      color: var(--accent);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .warning-box {
+      background: linear-gradient(135deg, rgba(247,129,102,0.1), rgba(210,153,34,0.05));
+      border: 1px solid var(--accent3);
+    }
+
+    .warning-box h4 {
+      color: var(--accent3);
+    }
+
+    /* Alert */
+    .alert {
+      background: rgba(247,129,102,0.1);
+      border: 1px solid rgba(247,129,102,0.3);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin: 32px 0;
+      display: flex;
+      gap: 16px;
+    }
+
+    .alert-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(247,129,102,0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .alert h4 {
+      color: var(--accent3);
+      margin-bottom: 8px;
+    }
+
+    .alert p {
+      color: rgba(255,255,255,0.8);
+      font-size: 0.95rem;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #3b82f6);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(88,166,255,0.3);
+      text-decoration: none;
+      color: #fff;
+    }
+
+    /* Lodging Section */
+    .lodging-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin: 32px 0;
+    }
+
+    .lodging-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .lodging-card:hover {
+      border-color: rgba(88,166,255,0.4);
+      transform: translateY(-4px);
+      box-shadow: var(--shadow);
+    }
+
+    .lodging-card-header {
+      padding: 20px;
+      background: linear-gradient(135deg, rgba(88,166,255,0.1), rgba(126,231,135,0.1));
+      border-bottom: 1px solid var(--border);
+    }
+
+    .lodging-card-header h4 {
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+    }
+
+    .lodging-type {
+      font-size: 0.85rem;
+      color: var(--accent2);
+    }
+
+    .lodging-card-body {
+      padding: 20px;
+    }
+
+    .lodging-card-body p {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 16px;
+    }
+
+    .lodging-features {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .lodging-feature {
+      background: rgba(255,255,255,0.05);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .lodging-card-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .lodging-location {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    /* Footer */
+    footer {
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      padding: 48px 20px;
+      text-align: center;
+    }
+
+    .footer-content {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .footer-logo {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .footer-text {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 24px;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      section { padding: 60px 0; }
+      .trail-detail-section { padding: 32px 20px; }
+      .day-stats { grid-template-columns: repeat(3, 1fr); }
+      .trail-options { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">🥾 307 Loe Family Adventure</div>
+      <h1>Choose Your Trail!<br>September 2026</h1>
+      <p class="hero-subtitle">
+        Three amazing Arizona backpacking adventures – one epic family reunion. 
+        Which trail will you vote for?
+      </p>
+
+      <div class="trail-options">
+        <div class="trail-card" onclick="location.href='#option1'">
+          <div class="trail-card-header">🏔️</div>
+          <h3>Option 1: Highline Trail</h3>
+          <p style="color: var(--muted); margin-bottom: 16px;">The Original Challenge</p>
+          <div class="trail-card-stats">
+            <span class="trail-stat">20.9 mi</span>
+            <span class="trail-stat">3 days</span>
+            <span class="trail-stat">4,370' gain</span>
+          </div>
+          <span class="trail-difficulty difficulty-hard">Hard</span>
+        </div>
+
+        <div class="trail-card" onclick="location.href='#option2'">
+          <div class="trail-card-header">🍂</div>
+          <h3>Option 2: San Francisco Peaks</h3>
+          <p style="color: var(--muted); margin-bottom: 16px;">Golden Aspen Groves</p>
+          <div class="trail-card-stats">
+            <span class="trail-stat">~20 mi</span>
+            <span class="trail-stat">3 days</span>
+            <span class="trail-stat">2,168' gain</span>
+          </div>
+          <span class="trail-difficulty difficulty-moderate">Moderate</span>
+        </div>
+
+        <div class="trail-card" onclick="location.href='#option3'">
+          <div class="trail-card-header">🌲</div>
+          <h3>Option 3: Blue Ridge</h3>
+          <p style="color: var(--muted); margin-bottom: 16px;">The Short & Sweet</p>
+          <div class="trail-card-stats">
+            <span class="trail-stat">15.4 mi</span>
+            <span class="trail-stat">2-3 days</span>
+            <span class="trail-stat">1,397' gain</span>
+          </div>
+          <span class="trail-difficulty difficulty-moderate">Moderate</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Navigation -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-logo">🏔️ 307 Highline 2026</div>
+      <ul class="nav-links">
+        <li><a href="#comparison">Compare</a></li>
+        <li><a href="#option1">Highline</a></li>
+        <li><a href="#option2">SF Peaks</a></li>
+        <li><a href="#option3">Blue Ridge</a></li>
+        <li><a href="#lodging">Lodging</a></li>
+        <li><a href="#signup">Sign Up</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Comparison Section -->
+  <section id="comparison" class="container">
+    <div class="section-header">
+      <h2>Trail Comparison</h2>
+      <p>All three trails offer amazing Arizona mountain scenery – here's how they stack up side-by-side.</p>
+    </div>
+
+    <div class="comparison-wrapper">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Highline Trail</th>
+            <th>San Francisco Peaks</th>
+            <th>Blue Ridge</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Distance</strong></td>
+            <td>20.9 miles</td>
+            <td>~20 miles</td>
+            <td>15.4 miles</td>
+          </tr>
+          <tr>
+            <td><strong>Days</strong></td>
+            <td>3</td>
+            <td>3</td>
+            <td>2-3 (flexible!)</td>
+          </tr>
+          <tr>
+            <td><strong>Max Single Climb</strong></td>
+            <td>1,800' (Day 3) 😰</td>
+            <td>600' (gentle) 😊</td>
+            <td>700' (gentle) 😊</td>
+          </tr>
+          <tr>
+            <td><strong>Total Elev Gain</strong></td>
+            <td>4,370'</td>
+            <td>2,168'</td>
+            <td>1,397'</td>
+          </tr>
+          <tr>
+            <td><strong>Difficulty</strong></td>
+            <td><span class="difficulty-hard">Hard</span></td>
+            <td><span class="difficulty-moderate">Moderate</span></td>
+            <td><span class="difficulty-moderate">Moderate</span></td>
+          </tr>
+          <tr>
+            <td><strong>Water Sources</strong></td>
+            <td>6 (excellent)</td>
+            <td>4 (good)</td>
+            <td>4 (good)</td>
+          </tr>
+          <tr>
+            <td><strong>Scenery</strong></td>
+            <td>Slickrock, rim views</td>
+            <td>Aspens, meadows</td>
+            <td>Pine forest, creeks</td>
+          </tr>
+          <tr>
+            <td><strong>Fall Colors</strong></td>
+            <td>Some</td>
+            <td><span class="star-rating">⭐⭐⭐ BEST</span></td>
+            <td>Some</td>
+          </tr>
+          <tr>
+            <td><strong>Drive from Page</strong></td>
+            <td>1 hour</td>
+            <td>2 hours</td>
+            <td>1.5 hours</td>
+          </tr>
+          <tr>
+            <td><strong>Family Lodging</strong></td>
+            <td><span class="star-rating">⭐⭐⭐ BEST</span></td>
+            <td>Good (Flagstaff)</td>
+            <td>Limited</td>
+          </tr>
+          <tr>
+            <td><strong>Trail Condition</strong></td>
+            <td>Newly restored (2022)</td>
+            <td>Excellent</td>
+            <td>Good</td>
+          </tr>
+          <tr>
+            <td><strong>"Old Legs" Factor</strong></td>
+            <td>Challenging</td>
+            <td>Comfortable</td>
+            <td>Comfortable</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="info-box" style="margin-top: 48px;">
+      <h4>💡 Quick Decision Guide</h4>
+      <p><strong>Vote for Highline if:</strong> You want the challenge, love the 1870s history, and are okay with that brutal Day 3 climb. Pine/Strawberry reunion basecamp is priority.</p>
+      <p><strong>Vote for San Francisco Peaks if:</strong> You want mountain beauty without the pain, fall aspen colors sound amazing, and "never too steep" is music to your ears.</p>
+      <p><strong>Vote for Blue Ridge if:</strong> Shorter is better, you want to START on top of the rim, and less elevation = happier knees. Great for backpacking beginners!</p>
+    </div>
+  </section>
+
+  <!-- OPTION 1: HIGHLINE TRAIL -->
+  <section id="option1" class="container">
+    <div class="trail-detail-section">
+      <div class="trail-detail-header">
+        <span class="trail-icon">🏔️</span>
+        <div>
+          <h2>Option 1: Highline Trail (Passage 26)</h2>
+          <p style="color: var(--muted); margin-top: 8px;">The Original Challenge – Historic 1870s Trail</p>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <h4>📍 Overview</h4>
+        <p><strong>Location:</strong> Pine Trailhead to Washington Park (Mogollon Rim)</p>
+        <p><strong>Distance:</strong> 20.9 miles | <strong>Days:</strong> 3 | <strong>Difficulty:</strong> Hard</p>
+        <p><strong>Elevation:</strong> 5,400' - 7,200' | <strong>Total Gain:</strong> 4,370'</p>
+        <p><strong>Best Feature:</strong> Spectacular slickrock formations + Historic Zane Grey territory</p>
+      </div>
+
+      <h3 style="margin: 32px 0 24px; font-size: 1.5rem; color: var(--accent2);">Day-by-Day Itinerary</h3>
+
+      <div class="day-cards">
+        <div class="day-card">
+          <div class="day-card-header">
+            <div class="day-number">1</div>
+            <div class="day-title">
+              <h4>Pine Trailhead → Webber Creek</h4>
+              <span>Getting into the rhythm</span>
+            </div>
+          </div>
+          <div class="day-card-body">
+            <div class="day-stats">
+              <div class="day-stat">
+                <div class="day-stat-value">~7</div>
+                <div class="day-stat-label">Miles</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">+800'</div>
+                <div class="day-stat-label">Elevation</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">4-5</div>
+                <div class="day-stat-label">Hours</div>
+              </div>
+            </div>
+            <ul class="highlights">
+              <li>Start at Pine Trailhead parking area (easy highway access)</li>
+              <li>Hike through beautiful ponderosa pine forest</li>
+              <li>Pass Red Rock Spring & Pine Spring (seasonal water)</li>
+              <li>Camp near Webber Creek – reliable water source</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="day-card">
+          <div class="day-card-header">
+            <div class="day-number">2</div>
+            <div class="day-title">
+              <h4>Webber Creek → Bray Creek</h4>
+              <span>The heart of the trail</span>
+            </div>
+          </div>
+          <div class="day-card-body">
+            <div class="day-stats">
+              <div class="day-stat">
+                <div class="day-stat-value">~8</div>
+                <div class="day-stat-label">Miles</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">+1,200'</div>
+                <div class="day-stat-label">Elevation</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">5-6</div>
+                <div class="day-stat-label">Hours</div>
+              </div>
+            </div>
+            <ul class="highlights">
+              <li>Best wildlife viewing – elk, deer, turkey common</li>
+              <li>Stunning views of the Mogollon Rim escarpment</li>
+              <li>Unique red sandstone "cow patty" formations (like Sedona!)</li>
+              <li>Rollercoaster terrain - constant ups and downs</li>
+              <li>Camp at Bray Creek – great campsites, reliable water</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="day-card">
+          <div class="day-card-header">
+            <div class="day-number">3</div>
+            <div class="day-title">
+              <h4>Bray Creek → Washington Park</h4>
+              <span>The grand finale (THE BEAST!)</span>
+            </div>
+          </div>
+          <div class="day-card-body">
+            <div class="day-stats">
+              <div class="day-stat">
+                <div class="day-stat-value">~6</div>
+                <div class="day-stat-label">Miles</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">+1,800'</div>
+                <div class="day-stat-label">Elevation ⚠️</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">4-5</div>
+                <div class="day-stat-label">Hours</div>
+              </div>
+            </div>
+            <ul class="highlights">
+              <li>Pass East Verde River – final water fill-up</li>
+              <li><strong>STEEP CLIMB</strong> onto the Mogollon Rim (12-15% grade!)</li>
+              <li>Rocky, exposed sandstone slopes</li>
+              <li>Incredible panoramic views from the rim top - worth it!</li>
+              <li>Finish at Washington Park Trailhead – celebration time!</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin: 48px 0 24px; font-size: 1.5rem; color: var(--accent2);">Water Sources</h3>
+      <table class="water-sources-table">
+        <thead>
+          <tr>
+            <th>Location</th>
+            <th>Mile</th>
+            <th>Status</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Red Rock Spring</td>
+            <td>~2</td>
+            <td><span class="water-status status-seasonal">Seasonal</span></td>
+            <td>Early in hike, near Pine TH</td>
+          </tr>
+          <tr>
+            <td>Pine Spring</td>
+            <td>~4</td>
+            <td><span class="water-status status-seasonal">Seasonal</span></td>
+            <td>Few miles into trail</td>
+          </tr>
+          <tr>
+            <td>Webber Creek</td>
+            <td>~7</td>
+            <td><span class="water-status status-reliable">Usually Reliable</span></td>
+            <td>Day 1 camp area ⭐</td>
+          </tr>
+          <tr>
+            <td>Bray Creek</td>
+            <td>~15</td>
+            <td><span class="water-status status-reliable">Usually Reliable</span></td>
+            <td>Day 2 camp area ⭐</td>
+          </tr>
+          <tr>
+            <td>North Sycamore Creek</td>
+            <td>~17</td>
+            <td><span class="water-status status-reliable">Usually Reliable</span></td>
+            <td>Between camps</td>
+          </tr>
+          <tr>
+            <td>East Verde River</td>
+            <td>~19</td>
+            <td><span class="water-status status-reliable">Usually Reliable</span></td>
+            <td>Last water before rim climb</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="warning-box">
+        <h4>⚠️ The Real Talk</h4>
+        <p><strong>Day 3 is BRUTAL:</strong> That 1,800' climb in 4-5 miles is 12-15% average grade, with some sections at 20%+. It's steep, rocky, and exposed. This is what earns the "Hard" rating.</p>
+        <p><strong>Cumulative Elevation:</strong> The trail has ~20,000' of cumulative up-and-down (rollercoaster effect). Your knees will feel it!</p>
+        <p><strong>Training Required:</strong> Follow Gemini's full program - wall sits to 2 min, pack to 25 lbs, downhill training is CRITICAL.</p>
+      </div>
+
+      <div class="info-box">
+        <h4>✨ Why Choose Highline?</h4>
+        <p><strong>Perfect if you want:</strong> The challenge and bragging rights, 1870s history (Zane Grey territory!), spectacular slickrock formations, excellent water sources, Pine/Strawberry family reunion basecamp.</p>
+        <p><strong>Historic Significance:</strong> Established in 1870, used by Zane Grey while hunting. Near Battle of Big Dry Wash (1882). Designated National Recreation Trail in 1979. Recently restored in 2022 with $800,000 investment!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPTION 2: SAN FRANCISCO PEAKS -->
+  <section id="option2" class="container">
+    <div class="trail-detail-section">
+      <div class="trail-detail-header">
+        <span class="trail-icon">🍂</span>
+        <div>
+          <h2>Option 2: San Francisco Peaks (Passage 34)</h2>
+          <p style="color: var(--muted); margin-top: 8px;">Golden Aspen Groves & Alpine Meadows</p>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <h4>📍 Overview</h4>
+        <p><strong>Location:</strong> Schultz Pass to FR 418 (Aspen Corner section, near Flagstaff)</p>
+        <p><strong>Distance:</strong> ~20 miles (customizable) | <strong>Days:</strong> 3 | <strong>Difficulty:</strong> Moderate</p>
+        <p><strong>Elevation:</strong> 8,900' - 9,010' | <strong>Total Gain:</strong> 2,168'</p>
+        <p><strong>Best Feature:</strong> <strong>GOLDEN ASPEN GROVES</strong> in September + "never too steep" trails!</p>
+      </div>
+
+      <h3 style="margin: 32px 0 24px; font-size: 1.5rem; color: var(--accent2);">Day-by-Day Itinerary</h3>
+
+      <div class="day-cards">
+        <div class="day-card">
+          <div class="day-card-header">
+            <div class="day-number">1</div>
+            <div class="day-title">
+              <h4>Schultz Pass → Snowbowl Road</h4>
+              <span>Into the ponderosa pines</span>
+            </div>
+          </div>
+          <div class="day-card-body">
+            <div class="day-stats">
+              <div class="day-stat">
+                <div class="day-stat-value">~7</div>
+                <div class="day-stat-label">Miles</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">+600'</div>
+                <div class="day-stat-label">Elevation</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">4-5</div>
+                <div class="day-stat-label">Hours</div>
+              </div>
+            </div>
+            <ul class="highlights">
+              <li>Start at Schultz Pass Trailhead (7,800')</li>
+              <li>Gentle climb through vanilla-scented ponderosa pines</li>
+              <li>First views of Humphreys Peak (12,633' - Arizona's highest!)</li>
+              <li>Wildlife: elk, deer, Abert's squirrels common</li>
+              <li>Camp near Snowbowl Road (8,400')</li>
+              <li>Water: Little Spring (0.5 mi off trail, usually reliable)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="day-card">
+          <div class="day-card-header">
+            <div class="day-number">2</div>
+            <div class="day-title">
+              <h4>Snowbowl Road → Hart Prairie</h4>
+              <span>The ASPEN ZONE! 🍁</span>
+            </div>
+          </div>
+          <div class="day-card-body">
+            <div class="day-stats">
+              <div class="day-stat">
+                <div class="day-stat-value">~7</div>
+                <div class="day-stat-label">Miles</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">+500'</div>
+                <div class="day-stat-label">Elevation</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">5-6</div>
+                <div class="day-stat-label">Hours</div>
+              </div>
+            </div>
+            <ul class="highlights">
+              <li><strong>GOLDEN ASPENS!</strong> - September = peak fall colors</li>
+              <li>Cross Hart Prairie - expansive alpine meadow</li>
+              <li>360° views of San Francisco Peaks</li>
+              <li>Humphreys & Agassiz Peaks tower above</li>
+              <li>Kendrick Peak visible to the west</li>
+              <li>Camp at Bismarck Lake area (8,900')</li>
+              <li>Water: Bismarck Lake (seasonal) or Alfa Fia Tank</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="day-card">
+          <div class="day-card-header">
+            <div class="day-number">3</div>
+            <div class="day-title">
+              <h4>Hart Prairie → FR 418</h4>
+              <span>Gentle descent through mixed forest</span>
+            </div>
+          </div>
+          <div class="day-card-body">
+            <div class="day-stats">
+              <div class="day-stat">
+                <div class="day-stat-value">~6</div>
+                <div class="day-stat-label">Miles</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">-600'</div>
+                <div class="day-stat-label">Elevation</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">3-4</div>
+                <div class="day-stat-label">Hours</div>
+              </div>
+            </div>
+            <ul class="highlights">
+              <li>Gentle descent - no brutal climbs!</li>
+              <li>Mixed conifer forest (spruce, fir, pine)</li>
+              <li>Unique fern fields (rare for Arizona!)</li>
+              <li>Last epic views of the Peaks behind you</li>
+              <li>Finish at FR 418 Trailhead (8,300')</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin: 48px 0 24px; font-size: 1.5rem; color: var(--accent2);">Water Sources</h3>
+      <table class="water-sources-table">
+        <thead>
+          <tr>
+            <th>Location</th>
+            <th>Mile</th>
+            <th>Status</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Little Spring</td>
+            <td>~5</td>
+            <td><span class="water-status status-reliable">Usually Reliable</span></td>
+            <td>0.5 mi off-trail via spur ⭐</td>
+          </tr>
+          <tr>
+            <td>Bismarck Lake</td>
+            <td>~14</td>
+            <td><span class="water-status status-seasonal">Seasonal</span></td>
+            <td>Check water report - can be dry!</td>
+          </tr>
+          <tr>
+            <td>Alfa Fia Tank</td>
+            <td>~16</td>
+            <td><span class="water-status status-reliable">Usually Reliable</span></td>
+            <td>Stock tank, filter well</td>
+          </tr>
+          <tr>
+            <td>East Cedar Tank</td>
+            <td>~22</td>
+            <td><span class="water-status status-reliable">Usually Reliable</span></td>
+            <td>If extending trip</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="warning-box">
+        <h4>⚠️ Important Notes</h4>
+        <p><strong>Altitude Alert:</strong> Trail runs at 9,000'! Spend a day in Flagstaff (7,000') to acclimate first. Drink LOTS of water, avoid alcohol the night before.</p>
+        <p><strong>Water Check Required:</strong> Bismarck Lake can be dry - always check the <a href="https://aztrail.org/explore/water-sources/" target="_blank">AZT Water Report</a> before your trip!</p>
+        <p><strong>Cold Nights:</strong> Expect 35-45°F at night. Bring a 30-40°F sleeping bag (warmer than Highline needs).</p>
+        <p><strong>Mountain Bikers:</strong> This section is VERY popular with bikers. Yield on downhills, stay alert.</p>
+      </div>
+
+      <div class="info-box">
+        <h4>✨ Why Choose San Francisco Peaks?</h4>
+        <p><strong>"Never too steep"</strong> - the most common review! Perfect for families who want mountain beauty WITHOUT the brutal climbs.</p>
+        <p><strong>Fall Colors:</strong> Aspen groves turn golden in mid-late September. "One of the best hikes in the state" during fall (Arizona Highways).</p>
+        <p><strong>Views:</strong> Humphreys Peak (Arizona's highest at 12,633'), alpine meadows, 360° mountain panoramas.</p>
+        <p><strong>Training:</strong> Moderate program - wall sits to 1.5 min, pack to 20-22 lbs, focus on altitude adjustment.</p>
+        <p><strong>Perfect For:</strong> Families with mixed experience, anyone who wants "mountain" feel without the pain, fall color enthusiasts, photography-focused trips.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- OPTION 3: BLUE RIDGE -->
+  <section id="option3" class="container">
+    <div class="trail-detail-section">
+      <div class="trail-detail-header">
+        <span class="trail-icon">🌲</span>
+        <div>
+          <h2>Option 3: Blue Ridge (Passage 27)</h2>
+          <p style="color: var(--muted); margin-top: 8px;">The Short & Sweet – Start ON TOP of the Rim!</p>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <h4>📍 Overview</h4>
+        <p><strong>Location:</strong> General Springs (Washington Park) to Blue Ridge Ranger Station</p>
+        <p><strong>Distance:</strong> 15.4 miles | <strong>Days:</strong> 2-3 (flexible!) | <strong>Difficulty:</strong> Moderate</p>
+        <p><strong>Elevation:</strong> 7,000' - 7,600' | <strong>Total Gain:</strong> 1,397'</p>
+        <p><strong>Best Feature:</strong> <strong>START ON TOP OF THE RIM</strong> (skip the climb!) + Historic General Springs Cabin</p>
+      </div>
+
+      <h3 style="margin: 32px 0 24px; font-size: 1.5rem; color: var(--accent2);">2-Day Itinerary (Faster Pace)</h3>
+
+      <div class="day-cards">
+        <div class="day-card">
+          <div class="day-card-header">
+            <div class="day-number">1</div>
+            <div class="day-title">
+              <h4>General Springs → East Clear Creek</h4>
+              <span>Ponderosa pines & historic cabin</span>
+            </div>
+          </div>
+          <div class="day-card-body">
+            <div class="day-stats">
+              <div class="day-stat">
+                <div class="day-stat-value">~9</div>
+                <div class="day-stat-label">Miles</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">+700'</div>
+                <div class="day-stat-label">Elevation</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">5-6</div>
+                <div class="day-stat-label">Hours</div>
+              </div>
+            </div>
+            <ul class="highlights">
+              <li>Start at historic General Springs Cabin (take photos!)</li>
+              <li>Trail follows General Springs Canyon</li>
+              <li>Aromatic ponderosa pines (vanilla/butterscotch scent)</li>
+              <li>Near Battle of Big Dry Wash historic site (1882)</li>
+              <li>Cross several forest roads (well-marked)</li>
+              <li>Camp at East Clear Creek junction - BEST campsite!</li>
+              <li>Water: East Clear Creek - RELIABLE, cold, flowing! ⭐</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="day-card">
+          <div class="day-card-header">
+            <div class="day-number">2</div>
+            <div class="day-title">
+              <h4>East Clear Creek → Blue Ridge Ranger Station</h4>
+              <span>Climb the ridge, then descend to finish</span>
+            </div>
+          </div>
+          <div class="day-card-body">
+            <div class="day-stats">
+              <div class="day-stat">
+                <div class="day-stat-value">~6.5</div>
+                <div class="day-stat-label">Miles</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">+600'</div>
+                <div class="day-stat-label">Then -900'</div>
+              </div>
+              <div class="day-stat">
+                <div class="day-stat-value">4-5</div>
+                <div class="day-stat-label">Hours</div>
+              </div>
+            </div>
+            <ul class="highlights">
+              <li>Cross East Clear Creek (wet feet likely - bring sandals!)</li>
+              <li>Climb out of 500' gorge (steepest section, but manageable)</li>
+              <li>Top out on Blue Ridge proper - ridge walking!</li>
+              <li>Views east toward Blue Ridge Reservoir</li>
+              <li>Begin descent to Highway 87 (~900' drop, well-graded)</li>
+              <li>Pass Blue Ridge Campground (pit toilets, trash = luxury!)</li>
+              <li>Finish at Blue Ridge Ranger Station / Highway 87</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="margin: 32px 0 24px; font-size: 1.5rem; color: var(--accent2);">3-Day Itinerary (Leisurely - RECOMMENDED!)</h3>
+
+      <div class="info-box">
+        <h4>🎯 Why 3 Days is Better for Families</h4>
+        <p><strong>Day 1:</strong> Short 5 miles to stock pond area - ease into the hike, explore historic sites</p>
+        <p><strong>Day 2:</strong> Easy 4 miles to East Clear Creek - afternoon swimming/relaxing at best campsite</p>
+        <p><strong>Day 3:</strong> Fresh legs for 6.5 mile climb out of gorge + finish</p>
+        <p><strong>Result:</strong> Everyone finishes happy, less rushed, more time to enjoy!</p>
+      </div>
+
+      <h3 style="margin: 48px 0 24px; font-size: 1.5rem; color: var(--accent2);">Water Sources</h3>
+      <table class="water-sources-table">
+        <thead>
+          <tr>
+            <th>Location</th>
+            <th>Mile</th>
+            <th>Status</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>General Springs Canyon</td>
+            <td>0-3</td>
+            <td><span class="water-status status-seasonal">Seasonal</span></td>
+            <td>Flowing in wet years</td>
+          </tr>
+          <tr>
+            <td>Stock Pond</td>
+            <td>~5</td>
+            <td><span class="water-status status-reliable">Usually Present</span></td>
+            <td>Muddy, filter well</td>
+          </tr>
+          <tr>
+            <td>East Clear Creek</td>
+            <td>~9</td>
+            <td><span class="water-status status-reliable">RELIABLE</span></td>
+            <td>Cold, clear, flowing! ⭐⭐⭐</td>
+          </tr>
+          <tr>
+            <td>Miller Canyon Creek</td>
+            <td>~9</td>
+            <td><span class="water-status status-reliable">Usually Reliable</span></td>
+            <td>Meets East Clear</td>
+          </tr>
+          <tr>
+            <td>Blue Ridge Reservoir</td>
+            <td>~13</td>
+            <td><span class="water-status status-seasonal">Variable</span></td>
+            <td>Can be far when low</td>
+          </tr>
+          <tr>
+            <td>Blue Ridge Campground</td>
+            <td>~14</td>
+            <td><span class="water-status status-seasonal">Seasonal</span></td>
+            <td>Potable when open (May-Oct)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="warning-box">
+        <h4>⚠️ Important Notes</h4>
+        <p><strong>Road Access:</strong> FR-300 to General Springs is 12 miles of DIRT/GRAVEL. Rough but doable in 2WD (high clearance helpful). Can be CLOSED in winter/spring - call ahead!</p>
+        <p><strong>Creek Crossing:</strong> East Clear Creek = wet feet guaranteed! Bring camp shoes/sandals for crossing. Water shoes or just embrace soggy boots.</p>
+        <p><strong>Alternative Start:</strong> If FR-300 is rough, start from Highway 87 and go southbound instead.</p>
+      </div>
+
+      <div class="info-box">
+        <h4>✨ Why Choose Blue Ridge?</h4>
+        <p><strong>Shortest Option:</strong> Only 15.4 miles total - perfect for mixed experience levels or backpacking newbies.</p>
+        <p><strong>Lowest Elevation Gain:</strong> Only 1,397' total - gentlest on the knees!</p>
+        <p><strong>Start on the Rim:</strong> Begin ON TOP of Mogollon Rim - skip the brutal climb!</p>
+        <p><strong>Flexible:</strong> Do 2 days (faster) or 3 days (leisurely) - your choice!</p>
+        <p><strong>Reliable Water:</strong> East Clear Creek is the best water source on any of these trails.</p>
+        <p><strong>Training:</strong> Light program - wall sits to 1 min, pack to 18-20 lbs, general cardio sufficient.</p>
+        <p><strong>Perfect For:</strong> Backpacking beginners, mixed-age families, weekend warriors short on time, anyone wanting "rim top" without the climb.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Lodging Section -->
+  <section id="lodging" style="background: linear-gradient(180deg, var(--bg), rgba(26,74,110,0.2)); padding: 80px 0;">
+    <div class="container">
+      <div class="section-header">
+        <h2>🏕️ Lodging & Basecamp</h2>
+        <p>Options for hikers, non-hikers, and everyone in between. Perfect for turning this into a family reunion!</p>
+      </div>
+
+      <h3 style="color: var(--accent); margin-bottom: 24px; font-size: 1.3rem;">🏨 Hotels & Lodges (Works for All Options)</h3>
+      <div class="lodging-grid">
+        
+        <div class="lodging-card">
+          <div class="lodging-card-header">
+            <h4>The Lodge at 5600</h4>
+            <div class="lodging-type">⭐ Upscale Mountain Lodge</div>
+          </div>
+          <div class="lodging-card-body">
+            <p>Modern luxury lodge with 8 rooms, on-site cafe, live music, and wine tastings. Can host events up to 50 people!</p>
+            <div class="lodging-features">
+              <span class="lodging-feature">🐕 Pet Friendly</span>
+              <span class="lodging-feature">🎵 Live Music</span>
+              <span class="lodging-feature">☕ Cafe</span>
+              <span class="lodging-feature">👨‍👩‍👧‍👦 Events</span>
+            </div>
+          </div>
+          <div class="lodging-card-footer">
+            <span class="lodging-location">📍 Pine, AZ</span>
+            <a href="https://lodgeat5600.com/" target="_blank" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">Visit Site →</a>
+          </div>
+        </div>
+
+        <div class="lodging-card">
+          <div class="lodging-card-header">
+            <h4>Cabins on Strawberry Hill</h4>
+            <div class="lodging-type">🌲 Cabin Resort</div>
+          </div>
+          <div class="lodging-card-body">
+            <p>14 private cabins at 6,100' elevation. Specifically caters to family reunions and group retreats!</p>
+            <div class="lodging-features">
+              <span class="lodging-feature">👨‍👩‍👧‍👦 Reunions</span>
+              <span class="lodging-feature">🐕 Pet Friendly</span>
+              <span class="lodging-feature">14 Cabins</span>
+            </div>
+          </div>
+          <div class="lodging-card-footer">
+            <span class="lodging-location">📍 Strawberry, AZ</span>
+            <a href="https://www.azcabins.com/" target="_blank" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">Visit Site →</a>
+          </div>
+        </div>
+
+        <div class="lodging-card">
+          <div class="lodging-card-header">
+            <h4>Goodfellow Lodge</h4>
+            <div class="lodging-type">🏛️ Historic Group Lodge</div>
+          </div>
+          <div class="lodging-card-body">
+            <p>Historic 1920s lodge at Tonto Natural Bridge with 10 furnished bedrooms. Perfect group rental for reunion basecamp!</p>
+            <div class="lodging-features">
+              <span class="lodging-feature">🛏️ 10 Bedrooms</span>
+              <span class="lodging-feature">🍽️ Kitchen</span>
+              <span class="lodging-feature">🏛️ Historic</span>
+            </div>
+          </div>
+          <div class="lodging-card-footer">
+            <span class="lodging-location">📍 Tonto Natural Bridge</span>
+            <a href="https://azstateparks.com/tonto/rentals" target="_blank" class="btn btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">Learn More →</a>
+          </div>
+        </div>
+
+      </div>
+
+      <h3 style="color: var(--accent); margin: 48px 0 24px; font-size: 1.3rem;">🌲 For San Francisco Peaks Option</h3>
+      <div class="info-box">
+        <h4>Flagstaff Lodging</h4>
+        <p><strong>Hotels:</strong> Little America Hotel (upscale), Doubletree (reliable), Hotel Monte Vista (historic downtown), Drury Inn (great breakfast)</p>
+        <p><strong>Unique:</strong> England House B&B, cabin rentals on VRBO near Snowbowl</p>
+        <p><strong>Bonus:</strong> Flagstaff has amazing breweries for post-hike celebration! Mother Road Brewing, Historic Brewing Company</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sign Up Section -->
+  <section id="signup" style="background: linear-gradient(180deg, rgba(45,74,62,0.3), var(--bg)); padding: 80px 0;">
+    <div class="container">
+      <div class="section-header">
+        <h2>Join the Adventure</h2>
+        <p>Sign up to stay informed as plans come together. We'll let you know which trail wins the vote!</p>
+      </div>
+
+      <div style="max-width: 600px; margin: 0 auto; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;">
+        <div style="background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); padding: 32px; text-align: center;">
+          <h2 style="font-size: 1.5rem; margin-bottom: 8px;">📝 Sign Up for Updates</h2>
+          <p style="opacity: 0.9;">September 2026 • Trail TBD</p>
+        </div>
+        <div style="background: #fff; border-radius: 0 0 16px 16px;">
+          <iframe 
+            src="https://docs.google.com/forms/d/e/1FAIpQLSdfLGXNJDN7gbIoklc66hK3YMmh2Rx9zRxyNhnUtyu8XsOKfA/viewform?embedded=true" 
+            width="100%" 
+            height="1500" 
+            frameborder="0" 
+            marginheight="0" 
+            marginwidth="0"
+            style="display: block;">
+            Loading…
+          </iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-logo">🏔️ 307 Highline Adventure 2026</div>
+      <p class="footer-text">
+        A Loe family adventure. Three trails. One epic reunion.<br>
+        LOE = 307 upside down 🙃
+      </p>
+      <div class="footer-credit" style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 0.85rem; color: var(--muted);">
+        Built with ❤️ for family adventures
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
