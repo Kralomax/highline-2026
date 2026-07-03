@@ -386,6 +386,73 @@
       text-decoration: underline;
     }
     
+    /* Trail Reality Check / Video Section */
+    .video-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin: 32px 0;
+    }
+
+    .video-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .video-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(210, 153, 34, 0.2);
+    }
+
+    .video-wrap {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 */
+      background: #000;
+    }
+
+    .video-wrap iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      border: 0;
+    }
+
+    .video-card-content {
+      padding: 18px 20px;
+    }
+
+    .video-card h4 {
+      color: var(--accent2);
+      margin-bottom: 6px;
+      font-size: 1.05rem;
+    }
+
+    .video-card p {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+    }
+
+    .comparison-table th, .comparison-table td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.95rem;
+    }
+
+    .comparison-table th {
+      color: var(--accent);
+    }
+
     /* Lodging Cards */
     .lodging-grid {
       display: grid;
@@ -564,7 +631,7 @@
       <div class="nav-logo">🌲 Blue Ridge Guide</div>
       <ul class="nav-links">
         <li><a href="#overview">Overview</a></li>
-        <li><a href="#photos">Photos</a></li>
+        <li><a href="#photos">Trail Reality</a></li>
         <li><a href="#itinerary">Itinerary</a></li>
         <li><a href="#fishing">Fishing</a></li>
         <li><a href="#gear">Gear List</a></li>
@@ -664,83 +731,92 @@
   <section id="photos" style="background: linear-gradient(180deg, rgba(26,74,110,0.1), var(--bg));">
     <div class="container">
       <div class="section-header">
-        <h2>📸 Trail Photo Gallery</h2>
-        <p>Get a visual preview of your adventure! Check out the ponderosa pines, mountain creeks, and stunning Mogollon Rim scenery.</p>
+        <h2>🎥 Trail Reality Check: What Day 3 Actually Feels Like</h2>
+        <p>Real video walkthroughs of Blue Ridge, plus an honest comparison to the training hikes we've already done - so nobody's surprised on the trail.</p>
       </div>
 
-      <div class="photo-grid">
-        <!-- Photo 1: General Springs Cabin -->
-        <div class="photo-card">
-          <img src="https://live.staticflickr.com/3850/14813861304_e2d4e22c19_b.jpg" alt="General Springs Cabin" />
-          <div class="photo-card-content">
-            <h4>General Springs Cabin (Your Starting Point!)</h4>
-            <p>Historic Forest Service cabin at the trailhead - you'll start your hike right here at 7,600' elevation!</p>
-            <a href="https://www.flickr.com/photos/coconinonationalforest/14813861304/" target="_blank">📷 Photo: USDA Forest Service (Public Domain)</a>
+      <div class="info-box">
+        <h4>ℹ️ The Honest Trail Description</h4>
+        <p>Every official and hiker source describes Blue Ridge the same way: the passage is <strong>mostly flat</strong>, with exactly two exceptions - the 500-foot-deep gorge carved by East Clear Creek, and the steep drop down to Highway 87 at the very end. Neither is considered a difficult climb, and multiple AllTrails reviewers specifically said the two climbs "aren't bad at all."</p>
+        <p>Trail conditions were reported <strong>"All Clear / Green"</strong> as of late June 2026, with dry conditions - worth a recheck closer to September for water levels.</p>
+      </div>
+
+      <div class="warning-box">
+        <h4>🥾 Day 3 Reality Check: The 500' Gorge Climb</h4>
+        <p>This is the one spot on the whole trip with a real, concentrated climb - dropping into East Clear Creek canyon and climbing back out the other side. Here's the good news: <strong>we already tested a climb this size.</strong> The steep Fernwood cabin trail we hiked has about 1,450' of elevation gain packed into just ~2 miles. The Blue Ridge gorge push is roughly a third of that concentrated gain. If Fernwood felt manageable (even if tough), this climb should feel easier.</p>
+        <p><strong>Pacing tip:</strong> Treat it like Fernwood - go slow, take water breaks every 15-20 minutes on the climb, and don't rush it. Budget 45-60 minutes for the ascent at a relaxed, family pace rather than trying to power through.</p>
+      </div>
+
+      <div class="info-box">
+        <h4>📊 Fernwood Training Hike vs. Blue Ridge, Side by Side</h4>
+        <table class="comparison-table">
+          <tr><th></th><th>Fernwood (our test hike)</th><th>Blue Ridge Trip</th></tr>
+          <tr><td>Distance</td><td>~2-4.2 miles</td><td>15.4 miles over 3 days</td></tr>
+          <tr><td>Elevation gain</td><td>~1,450' (concentrated!)</td><td>~1,400' total (spread out)</td></tr>
+          <tr><td>Biggest single climb</td><td>~1,450' in ~2 miles</td><td>~500' (East Clear Creek gorge)</td></tr>
+          <tr><td>Daily pace needed</td><td>All at once</td><td>~450-500'/day average</td></tr>
+        </table>
+        <p style="margin-top:14px;">Bottom line: what we did at Fernwood was <em>steeper per mile</em> than anything Blue Ridge asks for. Blue Ridge just asks us to hold that effort for longer.</p>
+      </div>
+
+      <div class="video-grid">
+        <div class="video-card">
+          <div class="video-wrap">
+            <iframe src="https://www.youtube.com/embed/pqSbYoFt_dM" title="Blue Ridge Passage: Arizona Trail" allowfullscreen></iframe>
+          </div>
+          <div class="video-card-content">
+            <h4>Blue Ridge Passage: Arizona Trail</h4>
+            <p>Starts right at General Springs Cabin - our exact Day 1 starting point.</p>
           </div>
         </div>
 
-        <!-- Photo 2: Ponderosa Pine Forest -->
-        <div class="photo-card">
-          <img src="https://images.unsplash.com/photo-1511497584788-876760111969?w=800&q=80" alt="Ponderosa Pine Forest" />
-          <div class="photo-card-content">
-            <h4>Ponderosa Pine Forest</h4>
-            <p>Walk through towering ponderosa pines - they smell like vanilla or butterscotch when the sun hits them!</p>
-            <a href="https://unsplash.com" target="_blank">📷 Photo: Unsplash (Free to use)</a>
+        <div class="video-card">
+          <div class="video-wrap">
+            <iframe src="https://www.youtube.com/embed/xwXGM0s5Q4c" title="Taste of Arizona Trail: Passages 27 & 28" allowfullscreen></iframe>
+          </div>
+          <div class="video-card-content">
+            <h4>Taste of Arizona Trail: Passages 27 &amp; 28</h4>
+            <p>Filmed as an easy/moderate group hike - good gut-check for pace and terrain.</p>
           </div>
         </div>
 
-        <!-- Photo 3: Mountain Creek -->
-        <div class="photo-card">
-          <img src="https://images.unsplash.com/photo-1501594907352-04cda38ebc29?w=800&q=80" alt="Mountain Creek" />
-          <div class="photo-card-content">
-            <h4>East Clear Creek</h4>
-            <p>Cold, clear, reliable water! Perfect for filtering, cooling off, and afternoon fishing sessions.</p>
-            <a href="https://unsplash.com" target="_blank">📷 Photo: Unsplash (Free to use)</a>
+        <div class="video-card">
+          <div class="video-wrap">
+            <iframe src="https://www.youtube.com/embed/wGWmCbXrqrc" title="AZT Passage 27 in a Day, Part 2" allowfullscreen></iframe>
+          </div>
+          <div class="video-card-content">
+            <h4>AZT Passage 27 - In a Day, Part 2</h4>
+            <p>Good look at the FR 751 / Blue Ridge trailhead end, near our Day 3 finish.</p>
           </div>
         </div>
 
-        <!-- Photo 4: Forest Trail -->
-        <div class="photo-card">
-          <img src="https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&q=80" alt="Forest Trail" />
-          <div class="photo-card-content">
-            <h4>Well-Maintained Trail</h4>
-            <p>The Blue Ridge Trail is well-marked and maintained - easy to follow with great footing!</p>
-            <a href="https://unsplash.com" target="_blank">📷 Photo: Unsplash (Free to use)</a>
+        <div class="video-card">
+          <div class="video-wrap">
+            <iframe src="https://www.youtube.com/embed/E0vD5WFONE8" title="AZT Passage 27, Blue Ridge Northbound Part 3" allowfullscreen></iframe>
           </div>
-        </div>
-
-        <!-- Photo 5: Mountain Views -->
-        <div class="photo-card">
-          <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&q=80" alt="Mountain Views" />
-          <div class="photo-card-content">
-            <h4>Mogollon Rim Country</h4>
-            <p>Spectacular views from the rim top - you start your hike at 7,600' elevation!</p>
-            <a href="https://unsplash.com" target="_blank">📷 Photo: Unsplash (Free to use)</a>
-          </div>
-        </div>
-
-        <!-- Photo 6: Camping -->
-        <div class="photo-card">
-          <img src="https://images.unsplash.com/photo-1478131143081-80f7f84ca84d?w=800&q=80" alt="Camping Under Stars" />
-          <div class="photo-card-content">
-            <h4>Camping Under the Stars</h4>
-            <p>September nights at 7,000'+ elevation = perfect camping weather and incredible stargazing!</p>
-            <a href="https://unsplash.com" target="_blank">📷 Photo: Unsplash (Free to use)</a>
+          <div class="video-card-content">
+            <h4>AZT Passage 27, Blue Ridge Northbound (Part 3)</h4>
+            <p>More footage of the northern stretch toward Highway 87.</p>
           </div>
         </div>
       </div>
 
       <div class="photo-links">
-        <h4>📸 Want More Real Trail Photos?</h4>
+        <h4>🔎 Want More Trail Reports?</h4>
         
         <div class="photo-link-box">
-          <strong>AllTrails User Photos:</strong>
-          <p>Check out <a href="https://www.alltrails.com/trail/us/arizona/arizona-trail-passage-27-blue-ridge" target="_blank">36 reviews with real trail photos</a> from hikers who've done Blue Ridge!</p>
+          <strong>AllTrails User Reviews:</strong>
+          <p>Check out <a href="https://www.alltrails.com/trail/us/arizona/arizona-trail-passage-27-blue-ridge" target="_blank">50 reviews with real trail photos and conditions</a> from hikers who've done Blue Ridge.</p>
         </div>
 
         <div class="photo-link-box">
-          <strong>East Clear Creek Blog:</strong>
-          <p>Beautiful photos at <a href="https://www.desertlavender.com/northern-arizona/mogollon-rim/east-clear-creek.php" target="_blank">Desert Lavender</a> - shows the creek canyon, pools, and camping spots.</p>
+          <strong>Trailforks Condition Reports:</strong>
+          <p>Check the <a href="https://www.trailforks.com/report/4118513" target="_blank">latest trail status reports</a> as September gets closer.</p>
+        </div>
+
+        <div class="photo-link-box">
+          <strong>Arizona Trail Water Report:</strong>
+          <p>Always check the <a href="https://aztrail.org/explore/water-sources/" target="_blank">official water report</a> before we go - tells us exactly which sources are flowing.</p>
         </div>
 
         <div class="photo-link-box">
